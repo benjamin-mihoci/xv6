@@ -2,6 +2,7 @@
 
 X64 ?= yes
 
+# needs binutils and gmake
 UNAME_S := $(shell uname -s)
 NODEFAULTLIBS = -nodefaultlibs
 ifeq ($(UNAME_S),FreeBSD)
