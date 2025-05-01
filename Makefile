@@ -2,15 +2,22 @@
 
 X64 ?= yes
 
+UNAME_S := $(shell uname -s)
+NODEFAULTLIBS = -nodefaultlibs
+ifeq ($(UNAME_S),FreeBSD)
+TOOLPREFIX=/usr/local/bin/
+NODEFAULTLIBS =
+endif
+
 ifeq ("$(X64)","yes")
 BITS = 64
 XOBJS = kobj/vm64.o
 XFLAGS = -m64 -DX64 -mcmodel=kernel -mtls-direct-seg-refs -mno-red-zone
-LDFLAGS = -m elf_x86_64 -nodefaultlibs
+LDFLAGS = -m elf_x86_64 $(NODEFAULTLIBS)
 QEMU ?= qemu-system-x86_64
 else
 XFLAGS = -m32
-LDFLAGS = -m elf_i386 -nodefaultlibs
+LDFLAGS = -m elf_i386 $(NODEFAULTLBIS)
 QEMU ?= qemu-system-i386
 endif
 
@@ -59,7 +66,9 @@ endif
 #TOOLPREFIX = i386-jos-elf-
 
 # Using native tools (e.g., on X86 Linux)
-#TOOLPREFIX =
+#TOOLPREFIX = 
+
+
 
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
@@ -107,10 +116,10 @@ out/bootblock: kernel/bootasm.S kernel/bootmain.c
 	@mkdir -p out
 	$(CC) -fno-builtin -fno-pic -m32 -nostdinc -Iinclude -O -o out/bootmain.o -c kernel/bootmain.c
 	$(CC) -fno-builtin -fno-pic -m32 -nostdinc -Iinclude -o out/bootasm.o -c kernel/bootasm.S
-	$(LD) -m elf_i386 -nodefaultlibs -N -e start -Ttext 0x7C00 -o out/bootblock.o out/bootasm.o out/bootmain.o
+	$(LD) -m elf_i386 $(NODEFAULTLIBS) -N -e start -Ttext 0x7C00 -o out/bootblock.o out/bootasm.o out/bootmain.o
 	$(OBJDUMP) -S out/bootblock.o > out/bootblock.asm
 	$(OBJCOPY) -S -O binary -j .text out/bootblock.o out/bootblock
-	tools/sign.pl out/bootblock
+	perl tools/sign.pl out/bootblock
 
 out/entryother: kernel/entryother.S
 	@mkdir -p out
